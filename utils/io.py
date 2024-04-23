@@ -9,6 +9,6 @@ def read_vasp_bec(xmlfile: str):
    root = ET.parse(xmlfile).getroot()
    array_vectors = root.findall("./calculation/*[@name='born_charges']/set/v")
    bec = np.array([np.fromstring(element.text, sep=' ') for element in array_vectors])
-   bec.reshape(-1,3,3)
+   bec = bec.reshape(-1,3,3)
    return bec
    
