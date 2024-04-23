@@ -19,4 +19,4 @@ def ase_db_to_csv(db_file):
    all_atoms = [row.toatoms().todict() for row in db.select('gap>0,converged=True')]
    all_bec = [row.data.bec for row in db.select('gap>0,converged=True')]
    df = pd.DataFrame(data={'structure': all_atoms, 'bec': all_bec})
-   pd.DataFrame.to_csv('data.csv', df)
+   df.to_csv('data.csv')
