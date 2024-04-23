@@ -18,5 +18,12 @@ def ase_db_to_csv(db_file):
    db = connect(db_file)
    all_atoms = [row.toatoms().todict() for row in db.select('gap>0,converged=True')]
    all_bec = [row.data.bec for row in db.select('gap>0,converged=True')]
-   df = pd.DataFrame(data={'structure': all_atoms, 'bec': all_bec})
+   energy = [row.energy for row in db.select('gap>0,converged=True')]
+   forces = [row.forces for row in db.select('gap>0,converged=True')]
+   df = pd.DataFrame(data={'structure': all_atoms, 
+                           'bec': all_bec,
+                           'energy': energy,
+                           'forces': forces,
+                          },
+                    )
    df.to_csv('data.csv')
