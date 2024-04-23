@@ -14,7 +14,7 @@ def read_vasp_bec(xmlfile: str):
 
 def ase_db_to_csv(db_file):
    from ase.db import connect
-   import panda as pd
+   import pandas as pd
    db = connect(db_file)
    all_atoms = [row.toatoms().todict() for row in db.select('gap>0,converged=True')]
    all_bec = [row.data.bed for row in db.select('gap>0,converged=True')]
