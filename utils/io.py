@@ -12,6 +12,15 @@ def read_vasp_bec(xmlfile: str):
     bec = np.array([np.fromstring(element.text, sep=' ') for element in array_vectors])
     bec = bec.reshape(-1,3,3)
     return bec
+    
+def read_vasp_epsilon(xmlfile: str):
+    """Given a vasprun.xml file location read and parse diel as np array 
+    """
+    import xml.etree.ElementTree as ET
+    root = ET.parse(xmlfile).getroot()
+    array_vectors = root.findall("./calculation/*[@name='epsilon']/v")
+    diel = np.array([np.fromstring(element.text, sep=' ') for element in array_vectors])
+    return diel
 
 def ase_db_to_df(db_file, save=False):
     from ase.db import connect
