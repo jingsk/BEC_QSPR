@@ -1,7 +1,7 @@
 #currently an empty file for loading, wrangling data
-# more to come
 import pandas as pd
 from utils.io import ase_db_to_df
+import numpy as np
 
 def load_data(filename):
     # load data from a csv file and derive formula and species columns from structure
@@ -26,3 +26,12 @@ def load_data(filename):
     #df['bec'] = df['bec'].apply(eval).apply(np.array)
 
     return df , species
+def train_valid_test_split(data, valid_size, test_size, seed=12):
+    size = len(data)
+    rng = np.random.default_rng(seed)
+    idx = np.arange(size)
+    rng.shuffle(idx)
+    idx_train = idx[:int(size*(1-valid_size-test_size))]
+    idx_valid = idx[int(size*(1-valid_size-test_size)):int(size*(1-test_size))]
+    idx_test = idx[int(size*(1-test_size)):]
+    return idx_train, idx_valid, idx_test
