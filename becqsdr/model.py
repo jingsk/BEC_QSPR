@@ -2,7 +2,7 @@
 #more to come
 import torch
 import time
-from utils.e3nn import Network
+from becqsdr.e3nn import Network
 import cmcrameri.cm as cm
 import torch.nn as nn
 import pandas as pd
