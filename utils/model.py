@@ -6,10 +6,7 @@ from utils.e3nn import Network
 import cmcrameri.cm as cm
 import torch.nn as nn
 import pandas as pd
-
-
-def visualize_output(entry: pd.Series, e3nn: E3NN):
-    
+import numpy as np
 
 class E3NN(Network):
     def __init__(self, in_dim, emb_dim, num_layers, max_radius, num_neighbors):
@@ -175,3 +172,53 @@ class E3NN(Network):
                     'optimizer': opt.state_dict(),
                     'scheduler': scheduler.state_dict() if scheduler else None
                 }
+
+def print_text(ax, mat):
+    for i in range(3):
+        for j in range(3):
+            text = ax.text(i,j, f"{mat[i, j]:.3f}",
+                           color='tab:red', size=10, ha='center', va='center')
+
+def visualize_output(entry: pd.Series, enn: E3NN, device: str):
+    import torch_geometric as tg
+    from e3nn.io import CartesianTensor
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+
+    idx_to_plt = [20, 21, 22, 23] 
+    x = tg.data.Batch.from_data_list([entry.data])
+    x.pos.requires_grad = True
+    bec_pred = enn(x.to(device))
+    bec_pred = CartesianTensor("ij=ij").to_cartesian(bec_pred.detach().cpu())
+    bec_pred = bec_pred.reshape(-1,3,3)
+    bec_real = entry.bec.reshape(-1,3,3)
+    
+    fig, axs = plt.subplots(len(idx_to_plt) * 1,3, 
+                           figsize=(4.5,2 * len(idx_to_plt)), 
+                           gridspec_kw={'width_ratios': [1,1,0.07]}
+                          )
+    plt.subplots_adjust(wspace=0.1)
+    
+    vmax = np.abs(bec_real[idx_to_plt]).max()
+    norm = plt.Normalize(vmin=-vmax, vmax=vmax)
+    
+    sm = mpl.cm.ScalarMappable(cmap=cm.vik_r, norm=norm)
+    
+    for i, idx in enumerate(idx_to_plt):
+    
+        axs[i, 0].imshow(bec_real[idx], cmap=sm.cmap, norm=sm.norm)
+        axs[i, 1].imshow(bec_pred[idx], cmap=sm.cmap, norm=sm.norm)
+        axs[i, 0].set_xticks([]); axs[i, 1].set_xticks([])
+        axs[i, 0].set_yticks([]); axs[i, 1].set_yticks([])
+        axs[i,2].set_visible(False)
+        print_text(axs[i, 0], bec_real[idx])
+        print_text(axs[i, 1], bec_pred[idx]-bec_real[idx])
+    
+    #plot format
+    axs[0, 0].set_title('True (red: value)')
+    axs[0, 1].set_title('Pred. (red: error)')
+    axs[0, 2].set_visible(True)
+    plt.colorbar(sm, cax=axs[0, 2]);
+    plt.tight_layout()
+    fig.savefig('./images/example_bec_test_iloc0.png', bbox_inches='tight', transparent=False)
+    
