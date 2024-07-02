@@ -3,7 +3,7 @@ import pandas as pd
 from utils.io import ase_db_to_df
 import numpy as np
 
-def load_data(filename):
+def load_db(filename):
     # load data from a csv file and derive formula and species columns from structure
     df = ase_db_to_df(filename)
     # try:
