@@ -5,7 +5,11 @@ import time
 from utils.e3nn import Network
 import cmcrameri.cm as cm
 import torch.nn as nn
+import pandas as pd
 
+
+def visualize_output(entry: pd.Series, e3nn: E3NN):
+    
 
 class E3NN(Network):
     def __init__(self, in_dim, emb_dim, num_layers, max_radius, num_neighbors):
