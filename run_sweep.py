@@ -40,28 +40,13 @@ torch.set_default_dtype(default_dtype)
 device = "cpu"
 
 r_max = 3.5 # cutoff radius
+db_file_name = 'data/bec_run.db'
 
-with open('config.yaml') as stream:
-    sweep_config = yaml.safe_load(stream)
-
-# load data
-df, species = load_db('data/bec_run.db')
-species = [Atom(k).number for k in species]
-Z_max = max([Atom(k).number for k in species])
-
-# one-hot encoding atom type and mass
-type_encoding = {}
-specie_am = []
-for Z in range(1, Z_max+1):
-    specie = Atom(Z)
-    type_encoding[specie.symbol] = Z - 1
-    specie_am.append(specie.mass)
-
-type_onehot = torch.eye(len(type_encoding))
-am_onehot = torch.diag(torch.tensor(specie_am))
+# with open('config.yaml') as stream:
+#     sweep_config = yaml.safe_load(stream)
 
 # build data
-def build_data(entry, type_encoding, type_onehot, r_max=3.5):
+def build_data(entry, am_onehot, type_encoding, type_onehot, r_max=3.5):
 
     symbols = list(entry.structure.symbols).copy()
     positions = torch.from_numpy(entry.structure.positions.copy())
@@ -94,8 +79,27 @@ def build_data(entry, type_encoding, type_onehot, r_max=3.5):
     return data
 
 
-df['data'] = df.progress_apply(lambda x: build_data(x, type_encoding, type_onehot, r_max), axis=1)
+def load_build_data(db_file_name, r_max):
+    # load data
+    df, species = load_db(db_file_name)
+    species = [Atom(k).number for k in species]
+    Z_max = max([Atom(k).number for k in species])
 
+    # one-hot encoding atom type and mass
+    type_encoding = {}
+    specie_am = []
+    for Z in range(1, Z_max+1):
+        specie = Atom(Z)
+        type_encoding[specie.symbol] = Z - 1
+        specie_am.append(specie.mass)
+
+    type_onehot = torch.eye(len(type_encoding))
+    am_onehot = torch.diag(torch.tensor(specie_am))
+    df['data'] = df.progress_apply(lambda x: build_data(x, am_onehot, type_encoding, type_onehot, r_max), axis=1)
+    return df, Z_max
+
+df, Z_max = load_build_data(db_file_name, r_max)
+print(f'Zmax={Z_max}')
 
 # Train/valid/test split
 test_size = 0.1
@@ -149,6 +153,7 @@ for results in enn.fit(opt, dataloader_train, dataloader_valid, history, s0, max
                "batch_loss": history[-1]['batch'], 
                "epoch": history[-1]['step']})
 
+#visualize training and model
 saved = torch.load(model_path, map_location=device)
 history = saved['history']
 
