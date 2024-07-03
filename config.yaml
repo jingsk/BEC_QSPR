@@ -1,0 +1,16 @@
+program: run_sweep.py
+method: grid
+metric:
+  goal: minimize
+  name: val_loss
+parameters:
+  lr:
+    values: [1e-3, 1e-4, 5e-4]
+  num_neighbors:
+    values: [5, 10, 20]
+  emb_dim:
+    values: [4, 8]
+  num_layers:
+    values: [2, 4]
+  max_iter:
+    value: 200
