@@ -37,13 +37,13 @@ bar_format = '{l_bar}{bar:10}{r_bar}{bar:-10b}'
 tqdm.pandas(bar_format=bar_format)
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
-device = "cpu"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 r_max = 3.5 # cutoff radius
 db_file_name = 'data/bec_run.db'
 
-# with open('config.yaml') as stream:
-#     sweep_config = yaml.safe_load(stream)
+with open("./config.yaml") as file:
+    config = yaml.load(file, Loader=yaml.FullLoader)
 
 # build data
 def build_data(entry, am_onehot, type_encoding, type_onehot, r_max=3.5):
@@ -110,19 +110,26 @@ dataloader_train = tg.loader.DataLoader(df.iloc[idx_train]['data'].tolist(), bat
 dataloader_valid = tg.loader.DataLoader(df.iloc[idx_valid]['data'].tolist(), batch_size=batch_size)
 dataloader_test = tg.loader.DataLoader(df.iloc[idx_test]['data'].tolist(), batch_size=batch_size)
 
+
+run = wandb.init(config=config)
+lr = wandb.config.lr
+num_neighbors = wandb.config.num_neighbors
+emb_dim = wandb.config.emb_dim
+num_layers = wandb.config.num_layers
+max_iter = wandb.config.max_iter
+
 args_enn = {'in_dim': Z_max,
-            'emb_dim': 4,
-            'num_layers': 2,
+            'emb_dim': emb_dim,
+            'num_layers': num_layers,
             'max_radius': r_max,
-            'num_neighbors': 10,
-           }
+            'num_neighbors': num_neighbors,
+        }
 
 enn = E3NN(**args_enn).to(device)
-opt = torch.optim.Adam(enn.parameters(), lr=1e-3)
+opt = torch.optim.Adam(enn.parameters(), lr=lr)
 scheduler = None #torch.optim.lr_scheduler.ExponentialLR(opt, gamma=0.99)
-
-model_path = 'models/' + enn.model_name + '.torch'
-wandb.init()
+model_name = f'lr{lr}_num_neighbors{num_neighbors}_emb_dim{emb_dim}_num_layers{num_layers}'
+model_path = f'models/{model_name}.torch'
 
 resume = False
     
@@ -144,35 +151,34 @@ else:
     s0 = 0
 
 # fit E3NN
-for results in enn.fit(opt, dataloader_train, dataloader_valid, history, s0, max_iter=max(0,200-s0), device=device,
-                       scheduler=scheduler):
+for results in enn.fit(opt, dataloader_train, dataloader_valid, history, s0, max_iter=max(0,max_iter-s0), device=device,
+                    scheduler=scheduler):
     with open(model_path, 'wb') as f:
         torch.save(results, f)
     wandb.log({"val_loss": history[-1]['valid'], 
                "train_loss": history[-1]['train'],
-               "batch_loss": history[-1]['batch'], 
                "epoch": history[-1]['step']})
 
 #visualize training and model
-saved = torch.load(model_path, map_location=device)
-history = saved['history']
+#saved = torch.load(model_path, map_location=device)
+#history = saved['history']
 
-steps = [d['step'] + 1 for d in history]
-loss_train = [d['train']['loss'] for d in history]
-loss_valid = [d['valid']['loss'] for d in history]
+# steps = [d['step'] + 1 for d in history]
+# loss_train = [d['train']['loss'] for d in history]
+# loss_valid = [d['valid']['loss'] for d in history]
 
-fig, ax = plt.subplots(figsize=(3.5,3))
-ax.plot(steps, loss_train, label='Train', color='red')
-ax.plot(steps, loss_valid, label='Valid.', color='blue')
-ax.set_xlabel('Iterations')
-ax.set_ylabel('Loss')
-ax.legend(frameon=False)
-ax.set_yscale('log')
-fig.savefig('images/loss.png', dpi=300, bbox_inches='tight')
+# fig, ax = plt.subplots(figsize=(3.5,3))
+# ax.plot(steps, loss_train, label='Train', color='red')
+# ax.plot(steps, loss_valid, label='Valid.', color='blue')
+# ax.set_xlabel('Iterations')
+# ax.set_ylabel('Loss')
+# ax.legend(frameon=False)
+# ax.set_yscale('log')
+# fig.savefig('images/loss.png', dpi=300, bbox_inches='tight')
 
-from becqsdr.model import visualize_output
+# from becqsdr.model import visualize_output
 
-enn.load_state_dict(saved['state'])
-entry = df.iloc[idx_test].iloc[0]
-visualize_output(entry, enn, device)
+# #enn.load_state_dict(saved['state'])
+# entry = df.iloc[idx_test].iloc[0]
+# visualize_output(entry, enn, device)
 
