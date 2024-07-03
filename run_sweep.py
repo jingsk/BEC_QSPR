@@ -28,6 +28,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from tqdm import tqdm
 from becqsdr.data import load_db
 import yaml
+import wandb
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -36,7 +37,7 @@ bar_format = '{l_bar}{bar:10}{r_bar}{bar:-10b}'
 tqdm.pandas(bar_format=bar_format)
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
-device = "cuda"
+device = "cpu"
 
 r_max = 3.5 # cutoff radius
 
@@ -117,8 +118,9 @@ opt = torch.optim.Adam(enn.parameters(), lr=1e-3)
 scheduler = None #torch.optim.lr_scheduler.ExponentialLR(opt, gamma=0.99)
 
 model_path = 'models/' + enn.model_name + '.torch'
+wandb.init()
 
-resume = True
+resume = False
     
 if resume:
     print(f'loading from {model_path}')
@@ -142,6 +144,10 @@ for results in enn.fit(opt, dataloader_train, dataloader_valid, history, s0, max
                        scheduler=scheduler):
     with open(model_path, 'wb') as f:
         torch.save(results, f)
+    wandb.log({"val_loss": history[-1]['valid'], 
+               "train_loss": history[-1]['train'],
+               "batch_loss": history[-1]['batch'], 
+               "epoch": history[-1]['step']})
 
 saved = torch.load(model_path, map_location=device)
 history = saved['history']
