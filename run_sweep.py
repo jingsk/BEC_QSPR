@@ -23,6 +23,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+import pandas as pd
 
 # utilities
 from tqdm import tqdm
@@ -95,7 +96,12 @@ def load_build_data(db_file_name, r_max):
 
     type_onehot = torch.eye(len(type_encoding))
     am_onehot = torch.diag(torch.tensor(specie_am))
-    df['data'] = df.progress_apply(lambda x: build_data(x, am_onehot, type_encoding, type_onehot, r_max), axis=1)
+    load_df = True
+    if load_df:
+        df = pd.read_pickle("./df_data.pkl")
+    else:
+        df['data'] = df.progress_apply(lambda x: build_data(x, am_onehot, type_encoding, type_onehot, r_max), axis=1)
+        df.to_pickle("./df_data.pkl")
     return df, Z_max
 
 df, Z_max = load_build_data(db_file_name, r_max)
