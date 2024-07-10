@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 
 class E3NN(Network):
-    def __init__(self, in_dim, emb_dim, num_layers, max_radius, num_neighbors):
+    def __init__(self, in_dim, emb_dim, num_layers, max_radius, num_neighbors, lmax=3, radial_layers=1, radial_neurons=100):
          
         kwargs = {'reduce_output': False,
                   'irreps_in': str(emb_dim)+"x0e",
@@ -18,11 +18,11 @@ class E3NN(Network):
                   'irreps_node_attr': str(emb_dim)+"x0e",
                   'layers': num_layers,
                   'mul': 32,
-                  'lmax': 3,
+                  'lmax': lmax,
                   'max_radius': max_radius,
                   'number_of_basis': 10,
-                  'radial_layers': 1,
-                  'radial_neurons': 100,
+                  'radial_layers': radial_layers,
+                  'radial_neurons': radial_neurons,
                   'num_neighbors': num_neighbors
                  }
         super().__init__(**kwargs)

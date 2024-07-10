@@ -39,6 +39,7 @@ tqdm.pandas(bar_format=bar_format)
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+load_df = True
 
 r_max = 3.5 # cutoff radius
 db_file_name = 'data/bec_run.db'
@@ -96,7 +97,6 @@ def load_build_data(db_file_name, r_max):
 
     type_onehot = torch.eye(len(type_encoding))
     am_onehot = torch.diag(torch.tensor(specie_am))
-    load_df = True
     if load_df:
         df = pd.read_pickle("./df_data.pkl")
     else:
