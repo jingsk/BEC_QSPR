@@ -3,9 +3,9 @@ import pandas as pd
 from becqsdr.io import ase_db_to_df
 import numpy as np
 
-def load_db(filename):
+def load_db(filename, selection):
     # load data from a csv file and derive formula and species columns from structure
-    df = ase_db_to_df(filename)
+    df = ase_db_to_df(filename, selection)
     # try:
     #     # structure provided as Atoms object
     #     df['structure'] = df['structure'].apply(eval).progress_map(lambda x: Atoms.fromdict(x))
