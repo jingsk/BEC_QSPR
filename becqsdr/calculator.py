@@ -34,7 +34,7 @@ from tqdm import tqdm
 import warnings
 warnings.filterwarnings("ignore")
 bar_format = '{l_bar}{bar:10}{r_bar}{bar:-10b}'
-tqdm.pandas(bar_format=bar_format)
+# tqdm.pandas(bar_format=bar_format)
 default_dtype = torch.float64
 torch.set_default_dtype(default_dtype)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -108,7 +108,8 @@ def load_build_data(frames, r_max):
     if load_df:
         df = pd.read_pickle("./df_data.pkl")
     else:
-        df['data'] = df.progress_apply(lambda x: build_data(x, am_onehot, type_encoding, type_onehot, r_max), axis=1)
+        #df['data'] = df.progress_apply(lambda x: build_data(x, am_onehot, type_encoding, type_onehot, r_max), axis=1)
+        df['data'] = df.apply(lambda x: build_data(x, am_onehot, type_encoding, type_onehot, r_max), axis=1)
         df.to_pickle("./df_data.pkl")
     return df, Z_max
 
