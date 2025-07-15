@@ -7,6 +7,7 @@ import cmcrameri.cm as cm
 import torch.nn as nn
 import pandas as pd
 import numpy as np
+from becqsde.utils import tensor_loss_torch
 
 class E3NN(Network):
     def __init__(self, in_dim, emb_dim, num_layers, max_radius, num_neighbors, lmax=3, radial_layers=1, radial_neurons=100):
@@ -81,7 +82,8 @@ class E3NN(Network):
         # print(b_true.shape)
         b_pred.reshape(b_true.shape)
         #return nn.MSELoss()(b_pred[-1,-4:], b_true[:,-4:])
-        return nn.MSELoss()(b_pred, b_true)
+        #return nn.MSELoss()(b_pred, b_true)
+        return tensor_loss_torch(b_true, b_pred, alpha=1.0, beta=0.3, gamma=0.1))
 
     
     # def loss_raman(self, y_pred, y_true):
