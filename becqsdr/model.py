@@ -7,7 +7,8 @@ import cmcrameri.cm as cm
 import torch.nn as nn
 import pandas as pd
 import numpy as np
-from becqsde.utils import tensor_loss_torch
+from becqsdr.utils import tensor_loss_torch
+#from becqsdr.loss import TensorDecomposedLoss
 
 class E3NN(Network):
     def __init__(self, in_dim, emb_dim, num_layers, max_radius, num_neighbors, lmax=3, radial_layers=1, radial_neurons=100):
@@ -77,13 +78,30 @@ class E3NN(Network):
     
 
     def loss_bec(self, b_pred, b_true):
-        b_pred=b_pred.reshape(b_true.shape)
-        # print(b_pred.shape)
-        # print(b_true.shape)
-        b_pred.reshape(b_true.shape)
+        b_pred = b_pred.reshape(b_true.shape)
+        #b_true = b_true.reshape(b_pred.shape)
+        #print(b_pred.shape)
+        #print(b_true.shape)
+        #b_pred.reshape(b_true.shape)
         #return nn.MSELoss()(b_pred[-1,-4:], b_true[:,-4:])
-        #return nn.MSELoss()(b_pred, b_true)
-        return tensor_loss_torch(b_true, b_pred, alpha=1.0, beta=0.3, gamma=0.1))
+        #print(nn.MSELoss(b_pred, b_true).shape) 
+        [n_batch, natoms, _] = b_pred.shape
+        # loss = np.average([
+        #         tensor_loss_torch(
+        #             b_true[i,j].reshape(3,3), 
+        #             b_pred[i,j].reshape(3,3), 
+        #             alpha=1.0, beta=0.3, gamma=0.1).cpu().detach().numpy()
+        #         for i, j in zip(range(n_batch), range(natoms))
+        # ])
+        loss = 0
+        for bec_true, bec_pred in zip(b_true, b_pred):
+            for tensor_true, tensor_pred in zip(bec_true, bec_pred):
+
+                loss += tensor_loss_torch(
+                    tensor_true.reshape(3,3), 
+                    tensor_pred.reshape(3,3), 
+                    alpha=1.0, beta=0.1, gamma=0.05)
+        return loss/(n_batch*natoms)
 
     
     # def loss_raman(self, y_pred, y_true):
@@ -100,7 +118,7 @@ class E3NN(Network):
             d.pos.requires_grad = True
             y_bec = self.forward(d)
             #print(y_bec.shape)
-            loss_bec = self.loss_bec(y_bec, d.b).cpu()
+            loss_bec = self.loss_bec(y_bec.clone(), d.b.clone()).cpu()
             #loss_raman = self.loss_raman(y_raman_pred, d.raman).cpu()
             loss = loss_bec
             
