@@ -25,7 +25,8 @@ class E3NN(Network):
                   'number_of_basis': 10,
                   'radial_layers': radial_layers,
                   'radial_neurons': radial_neurons,
-                  'num_neighbors': num_neighbors
+                  'num_neighbors': num_neighbors,
+                  'loss_weights': [1,1,1]
                  }
         super().__init__(**kwargs)
         
@@ -100,7 +101,9 @@ class E3NN(Network):
                 loss += tensor_loss_torch(
                     tensor_true.reshape(3,3), 
                     tensor_pred.reshape(3,3), 
-                    alpha=1.0, beta=0.1, gamma=0.05)
+                    alpha=self.loss_weights[0], 
+                    beta=self.loss_weights[1], 
+                    gamma=self.loss_weights[2])
         return loss/(n_batch*natoms)
 
     
