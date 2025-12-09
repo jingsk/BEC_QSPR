@@ -160,7 +160,9 @@ def model_arg(r_max,Z_max):
                 'radial_neurons': radial_neurons,
             }
     return args_enn
-
+#following suggestion to fix memory retention/inference slow down from https://discuss.pytorch.org/t/releasing-memory-after-running-a-pytorch-model-inference/175654/2
+# no gradients / computation graph will be tracked, saving memory
+@torch.no_grad()
 def calculate_bec(atoms, enn):
     df, _ = load_build_data([
         atoms
